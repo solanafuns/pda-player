@@ -1,0 +1,6 @@
+{
+    "rust-analyzer.linkedProjects": [
+        "./pda-player/Cargo.toml",
+        "./write-pda/Cargo.toml"
+    ]
+}
