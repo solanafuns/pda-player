@@ -1,14 +1,15 @@
+use borsh::to_vec;
 use solana_program::{
     account_info::{next_account_info, AccountInfo},
-    address_lookup_table::instruction,
     entrypoint::ProgramResult,
-    instruction::{AccountMeta, Instruction},
     msg,
-    program::{invoke, invoke_signed},
+    program::invoke_signed,
     pubkey::Pubkey,
     system_instruction,
     sysvar::{rent::Rent, Sysvar},
 };
+
+use crate::locker;
 
 solana_program::declare_id!("2z8nbNSTvHYFJTeMgz2kBb1gHksdiJJ34X3Vf9g7hBik");
 
@@ -39,10 +40,14 @@ pub fn process_instruction(
     );
 
     if pda_account.data_is_empty() {
-        let data_size: usize = 1024;
         let rent: Rent = Rent::get()?;
         // let rent_lamports: u64 = rent.minimum_balance(data_size);
-        let rent_lamports: u64 = 1000_000_000;
+        // let rent_lamports: u64 = 1_000_000_000;
+
+        let locker: locker::Locker = locker::Locker::new(payer.key.clone(), 0);
+        let locker_data = to_vec(&locker)?;
+        let data_size = locker_data.len();
+        let rent_lamports = rent.minimum_balance(data_size);
 
         invoke_signed(
             &system_instruction::create_account(
@@ -61,10 +66,7 @@ pub fn process_instruction(
         )?;
 
         let mut pda_data = pda_account.try_borrow_mut_data()?;
-
-        for i in 0..data_size {
-            pda_data[i] = 1;
-        }
+        pda_data.copy_from_slice(&locker_data);
     }
 
     // gracefully exit the program
