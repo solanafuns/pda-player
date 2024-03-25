@@ -1,21 +1,29 @@
 import * as web3 from "@solana/web3.js";
 import { loadPair, connection, waitConfirmation, confirmBalance } from "./tool";
-import { BorshSchema, borshSerialize, borshDeserialize, Unit } from "borsher";
+import { BorshSchema, borshSerialize } from "borsher";
 
 const instructionSchema = BorshSchema.Enum({
-  NewLock: BorshSchema.Unit,
-  UnLock: BorshSchema.Unit,
+  NewLock: BorshSchema.Struct({
+    amount: BorshSchema.u64,
+  }),
+  UnLock: BorshSchema.Struct({
+    amount: BorshSchema.u64,
+  }),
 });
 
 const loadNewLockInstruction = () => {
   return {
-    NewLock: {},
+    NewLock: {
+      amount: 1_000_0000,
+    },
   };
 };
 
-const loadUnLockInstruction = () => {
+const loadUnLockInstruction = (amount: Number) => {
   return {
-    UnLock: {},
+    UnLock: {
+      amount: amount,
+    },
   };
 };
 
@@ -99,7 +107,10 @@ const main = async () => {
         },
       ],
       programId: module,
-      data: borshSerialize(instructionSchema, loadUnLockInstruction()),
+      data: borshSerialize(
+        instructionSchema,
+        loadUnLockInstruction(1_000_000_000)
+      ),
     })
   );
 

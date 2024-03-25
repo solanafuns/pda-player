@@ -31,7 +31,7 @@ pub fn process_instruction(
 
     msg!("locker_account from client : {:?}", locker_account.key);
 
-    const LOCK_SECONDS: u64 = 300;
+    const LOCK_SECONDS: u64 = 10;
     const SEEDS: &[u8] = b"sol.locker";
 
     let (locker_pda, bump_seed) = Pubkey::find_program_address(&[SEEDS], program_id);
@@ -41,7 +41,7 @@ pub fn process_instruction(
     }
 
     match LockerInstruction::try_from_slice(instruction_data)? {
-        LockerInstruction::NewLock => {
+        LockerInstruction::NewLock(amount) => {
             let rent: Rent = Rent::get()?;
             let locker: Locker = Locker::new(
                 payer.key.clone(),
@@ -58,7 +58,7 @@ pub fn process_instruction(
                 &system_instruction::create_account(
                     payer.key,
                     locker_account.key,
-                    rent_lamports,
+                    rent_lamports + amount,
                     data_size as u64,
                     program_id,
                 ),
@@ -72,7 +72,7 @@ pub fn process_instruction(
             let mut locker_data = locker_account.try_borrow_mut_data()?;
             locker_data.clone_from_slice(&body);
         }
-        LockerInstruction::UnLock => {
+        LockerInstruction::UnLock(amount) => {
             msg!("I will unlock all sol!!");
             {
                 let locker: Locker = Locker::try_from_slice(&locker_account.data.borrow())?;
@@ -85,13 +85,17 @@ pub fn process_instruction(
             }
 
             let dest_starting_lamports = payer.lamports();
-            **payer.lamports.borrow_mut() = dest_starting_lamports
-                .checked_add(locker_account.lamports())
-                .unwrap();
-            **locker_account.lamports.borrow_mut() = 0;
-            let mut source_data: std::cell::RefMut<'_, &mut [u8]> =
-                locker_account.data.borrow_mut();
-            source_data.fill(0)
+
+            **payer.lamports.borrow_mut() = dest_starting_lamports.checked_add(amount).unwrap();
+            **locker_account.lamports.borrow_mut() -= amount;
+
+            // **payer.lamports.borrow_mut() = dest_starting_lamports
+            //     .checked_add(locker_account.lamports())
+            //     .unwrap();
+            // **locker_account.lamports.borrow_mut() = 0;
+            // let mut source_data: std::cell::RefMut<'_, &mut [u8]> =
+            //     locker_account.data.borrow_mut();
+            // source_data.fill(0)
         }
     }
 

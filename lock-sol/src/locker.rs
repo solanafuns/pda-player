@@ -17,6 +17,6 @@ impl Locker {
 
 #[derive(borsh::BorshDeserialize, borsh::BorshSerialize, Clone, Copy)]
 pub enum LockerInstruction {
-    NewLock,
-    UnLock,
+    NewLock(u64),
+    UnLock(u64),
 }
