@@ -1,6 +1,7 @@
 use borsh::to_vec;
 use solana_program::{
     account_info::{next_account_info, AccountInfo},
+    clock::Clock,
     entrypoint::ProgramResult,
     msg,
     program::invoke_signed,
@@ -44,7 +45,10 @@ pub fn process_instruction(
         // let rent_lamports: u64 = rent.minimum_balance(data_size);
         // let rent_lamports: u64 = 1_000_000_000;
 
-        let locker: locker::Locker = locker::Locker::new(payer.key.clone(), 0);
+        let clock = Clock::get()?;
+
+        let locker: locker::Locker =
+            locker::Locker::new(payer.key.clone(), clock.unix_timestamp as u64 + 86400);
         let locker_data = to_vec(&locker)?;
         let data_size = locker_data.len();
         let rent_lamports = rent.minimum_balance(data_size);
