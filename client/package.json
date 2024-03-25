@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "ts-node start.ts",
+    "locker": "ts-node locker.ts",
+    "basic": "ts-node basic.ts",
     "close": "ts-node close.ts"
   },
   "keywords": [],
@@ -17,6 +18,9 @@
     "typescript": "^5.4.3"
   },
   "dependencies": {
-    "@solana/web3.js": "^1.91.1"
+    "@solana/web3.js": "^1.91.1",
+    "borsh": "^2.0.0",
+    "borsher": "^2.6.0",
+    "dotenv": "^16.4.5"
   }
 }
