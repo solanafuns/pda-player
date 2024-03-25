@@ -72,7 +72,7 @@ pub fn process_instruction(
             let mut locker_data = locker_account.try_borrow_mut_data()?;
             locker_data.clone_from_slice(&body);
         }
-        LockerInstruction::UnLock(amount) => {
+        LockerInstruction::UnLock(mut amount) => {
             msg!("I will unlock all sol!!");
             {
                 let locker: Locker = Locker::try_from_slice(&locker_account.data.borrow())?;
@@ -84,6 +84,13 @@ pub fn process_instruction(
                 assert!(clock.unix_timestamp as u64 > locker.lock_until);
             }
 
+            if amount > locker_account.lamports() {
+                let mut source_data: std::cell::RefMut<'_, &mut [u8]> =
+                    locker_account.data.borrow_mut();
+                source_data.fill(0);
+                amount = locker_account.lamports();
+            }
+
             let dest_starting_lamports = payer.lamports();
 
             **payer.lamports.borrow_mut() = dest_starting_lamports.checked_add(amount).unwrap();
@@ -93,9 +100,6 @@ pub fn process_instruction(
             //     .checked_add(locker_account.lamports())
             //     .unwrap();
             // **locker_account.lamports.borrow_mut() = 0;
-            // let mut source_data: std::cell::RefMut<'_, &mut [u8]> =
-            //     locker_account.data.borrow_mut();
-            // source_data.fill(0)
         }
     }
 
